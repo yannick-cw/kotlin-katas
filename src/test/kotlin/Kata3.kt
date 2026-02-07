@@ -4,7 +4,7 @@ import io.kotest.matchers.shouldNotBe
 
 class DataClassesSpec : StringSpec({
     "copy should create new instance with modified fields" {
-        val original = User(id = 1, name = "Alice", email = "alice@example.com")
+        val original = UserD(id = 1, name = "Alice", email = "alice@example.com")
         val updated = original.copy(email = "newalice@example.com")
 
         updated.id shouldBe 1
@@ -14,7 +14,7 @@ class DataClassesSpec : StringSpec({
     }
 
     "destructuring should work with component functions" {
-        val user = User(id = 42, name = "Bob", email = "bob@example.com")
+        val user = UserD(id = 42, name = "Bob", email = "bob@example.com")
         val (id, name, email) = user
 
         id shouldBe 42
@@ -23,15 +23,15 @@ class DataClassesSpec : StringSpec({
     }
 
     "equals should compare by content not reference" {
-        val user1 = User(1, "Alice", "alice@example.com")
-        val user2 = User(1, "Alice", "alice@example.com")
+        val user1 = UserD(1, "Alice", "alice@example.com")
+        val user2 = UserD(1, "Alice", "alice@example.com")
 
         user1 shouldBe user2
         (user1 === user2) shouldBe false // Different instances
     }
 
     "should implement immutable update pattern" {
-        val users = listOf(User(1, "Alice", "alice@old.com"), User(2, "Bob", "bob@old.com"))
+        val users = listOf(UserD(1, "Alice", "alice@old.com"), UserD(2, "Bob", "bob@old.com"))
 
         val updated = users.updateEmail(1, "alice@new.com")
 
@@ -41,7 +41,7 @@ class DataClassesSpec : StringSpec({
     }
 
     "should merge two users keeping non-null values" {
-        val base = User(1, "Alice", "alice@example.com")
+        val base = UserD(1, "Alice", "alice@example.com")
         val updates = PartialUser(name = null, email = "new@example.com")
 
         val merged = base.mergeWith(updates)
@@ -52,12 +52,12 @@ class DataClassesSpec : StringSpec({
 })
 
 // TODO: Define the data class
-data class User(val id: Long, val name: String, val email: String)
+data class UserD(val id: Long, val name: String, val email: String)
 
 // For partial updates
 data class PartialUser(val name: String?, val email: String?)
 
-fun List<User>.updateEmail(userId: Long, newEmail: String): List<User> = map {
+fun List<UserD>.updateEmail(userId: Long, newEmail: String): List<UserD> = map {
     if (it.id == userId) {
         it.updateEmail(newEmail)
     } else {
@@ -65,7 +65,7 @@ fun List<User>.updateEmail(userId: Long, newEmail: String): List<User> = map {
     }
 }
 
-fun User.updateEmail(newEmail: String): User = copy(email = newEmail)
+fun UserD.updateEmail(newEmail: String): UserD = copy(email = newEmail)
 
-fun User.mergeWith(partial: PartialUser): User =
+fun UserD.mergeWith(partial: PartialUser): UserD =
     copy(name = partial.name ?: name, email = partial.email ?: email)
