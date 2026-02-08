@@ -97,15 +97,30 @@ enum class IsolationLevel {
     SERIALIZABLE;
 
     fun preventsDirtyRead(): Boolean {
-        TODO()
+        return when(this) {
+            IsolationLevel.READ_UNCOMMITTED -> false
+            IsolationLevel.READ_COMMITTED -> true
+            IsolationLevel.REPEATABLE_READ -> true
+            IsolationLevel.SERIALIZABLE -> true
+        }
     }
 
     fun preventsNonRepeatableRead(): Boolean {
-        TODO()
+        return when(this) {
+            IsolationLevel.READ_UNCOMMITTED -> false
+            IsolationLevel.READ_COMMITTED -> false
+            IsolationLevel.REPEATABLE_READ -> true
+            IsolationLevel.SERIALIZABLE -> true
+        }
     }
 
     fun preventsPhantomRead(): Boolean {
-        TODO()
+        return when(this) {
+            IsolationLevel.READ_UNCOMMITTED -> false
+            IsolationLevel.READ_COMMITTED -> false
+            IsolationLevel.REPEATABLE_READ -> false
+            IsolationLevel.SERIALIZABLE -> true
+        }
     }
 }
 
@@ -118,8 +133,13 @@ class IsolationDB(val isolationLevel: IsolationLevel) {
     private val uncommitted = mutableMapOf<Long, MutableMap<String, Any?>>()
     private var nextTxId = 1L
 
-    fun set(key: String, value: Any?) { data[key] = value }
-    fun insert(row: Row) { rows.add(row) }
+    fun set(key: String, value: Any?) {
+        data[key] = value
+    }
+
+    fun insert(row: Row) {
+        rows.add(row)
+    }
 
     fun begin(): Transaction {
         val txId = nextTxId++
@@ -142,7 +162,12 @@ class IsolationDB(val isolationLevel: IsolationLevel) {
 
         fun get(key: String): Any? {
             // Implement based on isolation level
-            TODO()
+
+            return when (isolationLevel) {
+                IsolationLevel.READ_UNCOMMITTED -> uncommitted.values.map { it[key] }.firstOrNull() ?: data[key]
+                IsolationLevel.READ_COMMITTED -> data[key]
+                IsolationLevel.REPEATABLE_READ, IsolationLevel.SERIALIZABLE -> localWrites[key] ?: snapshot[key]
+            }
         }
 
         fun set(key: String, value: Any?) {
