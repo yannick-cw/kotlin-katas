@@ -1,5 +1,6 @@
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import kotlin.math.max
 
 class SlidingWindowSpec : StringSpec({
 
@@ -25,6 +26,7 @@ class SlidingWindowSpec : StringSpec({
         longestUniqueSubstring("pwwkew") shouldBe 3     // "wke"
         longestUniqueSubstring("") shouldBe 0
         longestUniqueSubstring("abcdef") shouldBe 6     // whole string
+        longestUniqueSubstring("dvdf") shouldBe 3       // "vdf" - can't just reset to single char
     }
 
     "should find smallest subarray with sum >= target" {
@@ -45,27 +47,34 @@ fun maxSumWindow(nums: List<Int>, k: Int): Int {
     if (nums.size < k) return 0
 
     // Initialize first window
-    var windowSum = nums.take(k).sum()
-    var maxSum = windowSum
+    val initWindow = nums.take(k).sum()
 
-    // TODO: Slide the window
+    val (_, maxWindow) = (0 until nums.size - k).fold(initWindow to initWindow) { (currentWindowSum, currentMax), dropPosition ->
+        val newWindowSum = currentWindowSum - nums[dropPosition] + nums[dropPosition + k]
+
+        if (newWindowSum > currentMax) {
+            newWindowSum to newWindowSum
+        } else {
+            newWindowSum to currentMax
+        }
+    }
+
+    return maxWindow
     // For i in k until nums.size:
     //   windowSum += nums[i] - nums[i - k]  // add entering, remove leaving
     //   maxSum = maxOf(maxSum, windowSum)
-    TODO()
 }
 
 fun maxInEachWindow(nums: List<Int>, k: Int): List<Int> {
     if (nums.size < k) return emptyList()
 
-    val result = mutableListOf<Int>()
 
     // Simple approach: O(n*k) - recalculate max each window
     // Optimal approach: O(n) using Deque to track max candidates
     // For this kata, simple approach is fine
 
     // TODO: For each window position, find the max
-    TODO()
+    return nums.windowed(k).map { it.max() }
 }
 
 // ===== VARIABLE-SIZE WINDOW =====
@@ -85,7 +94,16 @@ fun longestUniqueSubstring(s: String): Int {
     //     seen.add(s[right])
     //     maxLen = maxOf(maxLen, right - left + 1)
     // }
-    TODO()
+
+    val (_, max) = s.fold("" to 0) { (nonRepeatingSub, longestYet), nextChar ->
+        if (nonRepeatingSub.contains(nextChar)) {
+            val newSub = nonRepeatingSub.dropWhile { it != nextChar }.drop(1) + nextChar
+            newSub to longestYet
+        } else {
+            nonRepeatingSub + nextChar to max(longestYet, nonRepeatingSub.length + 1)
+        }
+    }
+    return max
 }
 
 fun minSubarrayLen(target: Int, nums: List<Int>): Int {
