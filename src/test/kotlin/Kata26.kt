@@ -29,8 +29,7 @@ class TrieSpec : StringSpec({
         val trie = Trie()
         listOf("car", "card", "care", "careful", "cat").forEach { trie.insert(it) }
 
-        trie.wordsWithPrefix("car") shouldContainExactlyInAnyOrder
-                listOf("car", "card", "care", "careful")
+        trie.wordsWithPrefix("car") shouldContainExactlyInAnyOrder listOf("car", "card", "care", "careful")
         trie.wordsWithPrefix("cat") shouldContainExactlyInAnyOrder listOf("cat")
         trie.wordsWithPrefix("dog") shouldBe emptyList()
     }
@@ -80,7 +79,10 @@ class Trie {
 
     fun insert(word: String) {
         // TODO: Walk/create path, mark end
-        TODO()
+        val endNode = word.fold(root) { node, c ->
+            node.children.getOrPut(c) { Node() }
+        }
+        endNode.isEndOfWord = true
     }
 
     fun insertWithScore(word: String, score: Int) {
@@ -90,7 +92,11 @@ class Trie {
 
     fun search(word: String): Boolean {
         // TODO: Find node at end of path, check isEndOfWord
-        TODO()
+
+        val endNode = word.fold(root as Node?) { node, c ->
+            node?.children?.get(c)
+        }
+        return endNode?.isEndOfWord == true
     }
 
     fun startsWith(prefix: String): Boolean {
