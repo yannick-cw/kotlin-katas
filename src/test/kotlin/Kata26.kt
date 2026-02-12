@@ -77,17 +77,15 @@ class Trie {
 
     private val root = Node()
 
-    fun insert(word: String) {
-        // TODO: Walk/create path, mark end
+    fun insert(word: String) = insertWithScore(word, 0)
+
+    fun insertWithScore(word: String, score: Int) {
+        // TODO: Same as insert, but also set score at end node
         val endNode = word.fold(root) { node, c ->
             node.children.getOrPut(c) { Node() }
         }
         endNode.isEndOfWord = true
-    }
-
-    fun insertWithScore(word: String, score: Int) {
-        // TODO: Same as insert, but also set score at end node
-        TODO()
+        endNode.score = score
     }
 
     fun search(word: String): Boolean = walkToEnd(word)?.isEndOfWord == true
@@ -100,43 +98,32 @@ class Trie {
         currNode?.children[char]
     }
 
-    fun delete(word: String): Boolean {
-        // TODO: Find the word, unmark isEndOfWord
+    fun delete(word: String): Boolean =
+    // TODO: Find the word, unmark isEndOfWord
         // (Simple version - doesn't clean up unused nodes)
-        TODO()
+        walkToEnd(word)?.let { it.isEndOfWord = false } != null
+
+    fun wordsWithPrefix(prefix: String): List<String> = wordsWithPrefixAndNode(prefix).map { it.second }
+
+
+    private fun wordsWithPrefixAndNode(prefix: String): List<Pair<Node, String>> {
+        fun recCollectPrefixNodes(node: Node, path: String): List<Pair<Node, String>> =
+            (if (node.isEndOfWord) listOf(node to path) else listOf()) + node.children.flatMap { (nextChar, nextNode) ->
+                recCollectPrefixNodes(nextNode, path + nextChar)
+            }
+        return walkToEnd(prefix)?.let { recCollectPrefixNodes(it, prefix) } ?: listOf()
     }
 
-    fun wordsWithPrefix(prefix: String): List<String> {
-        // TODO:
-        // 1. Find node at end of prefix
-        // 2. DFS to collect all words below
-        val nodeAtEndOfPrefix = walkToEnd(prefix)
+    fun countWordsWithPrefix(prefix: String): Int = wordsWithPrefix(prefix).size
 
-        fun recChildren(node: Node): List<String> = node.children.flatMap { (nextChar, nextNode) ->
-            val recChildren = recChildren(nextNode)
-            val wordEndsHereAsWell = if (nextNode.isEndOfWord) listOf(nextChar.toString()) else listOf()
-            wordEndsHereAsWell + recChildren.map { nextChar + it }
-        }
 
-        return if (nodeAtEndOfPrefix == null) {
-            listOf()
-        } else {
-            (if (nodeAtEndOfPrefix.isEndOfWord) listOf(prefix) else listOf()) + recChildren(nodeAtEndOfPrefix).map { prefix + it }
-        }
-    }
-
-    fun countWordsWithPrefix(prefix: String): Int {
-        // TODO: Find prefix node, DFS counting isEndOfWord nodes
-        TODO()
-    }
-
-    fun autocomplete(prefix: String, limit: Int): List<String> {
-        // TODO:
-        // 1. Find all words with prefix
-        // 2. Sort by score descending
+    fun autocomplete(prefix: String, limit: Int): List<String> =
+    // TODO:
+    // 1. Find all words with prefix
+    // 2. Sort by score descending
         // 3. Return top 'limit'
-        TODO()
-    }
+        wordsWithPrefixAndNode(prefix).sortedByDescending { it.first.score }.take(limit).map { it.second }
+
 
     // Helper: navigate to node at end of path (or null if not exists)
     private fun findNode(path: String): Node? {
