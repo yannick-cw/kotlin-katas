@@ -90,18 +90,14 @@ class Trie {
         TODO()
     }
 
-    fun search(word: String): Boolean {
-        // TODO: Find node at end of path, check isEndOfWord
+    fun search(word: String): Boolean = walkToEnd(word)?.isEndOfWord == true
 
-        val endNode = word.fold(root as Node?) { node, c ->
-            node?.children?.get(c)
-        }
-        return endNode?.isEndOfWord == true
-    }
 
-    fun startsWith(prefix: String): Boolean {
-        // TODO: Just check if path exists (don't need isEndOfWord)
-        TODO()
+    fun startsWith(prefix: String): Boolean = walkToEnd(prefix) != null
+
+
+    private fun walkToEnd(word: String): Node? = word.fold(root as Node?) { currNode, char ->
+        currNode?.children[char]
     }
 
     fun delete(word: String): Boolean {
@@ -114,7 +110,19 @@ class Trie {
         // TODO:
         // 1. Find node at end of prefix
         // 2. DFS to collect all words below
-        TODO()
+        val nodeAtEndOfPrefix = walkToEnd(prefix)
+
+        fun recChildren(node: Node): List<String> = node.children.flatMap { (nextChar, nextNode) ->
+            val recChildren = recChildren(nextNode)
+            val wordEndsHereAsWell = if (nextNode.isEndOfWord) listOf(nextChar.toString()) else listOf()
+            wordEndsHereAsWell + recChildren.map { nextChar + it }
+        }
+
+        return if (nodeAtEndOfPrefix == null) {
+            listOf()
+        } else {
+            (if (nodeAtEndOfPrefix.isEndOfWord) listOf(prefix) else listOf()) + recChildren(nodeAtEndOfPrefix).map { prefix + it }
+        }
     }
 
     fun countWordsWithPrefix(prefix: String): Int {
