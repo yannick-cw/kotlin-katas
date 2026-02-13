@@ -70,6 +70,7 @@ class BloomFilterSpec : StringSpec({
 
         val estimated = bloom.approximateElementCount()
 
+        println(estimated)
         // Should be roughly 500 (allow 400-600 range)
         (estimated > 400) shouldBe true
         (estimated < 600) shouldBe true
@@ -92,8 +93,8 @@ class BloomFilterSpec : StringSpec({
 data class BloomParameters(val bits: Int, val hashFunctions: Int)
 
 class BloomFilter<T>(
-    expectedElements: Int,
-    falsePositiveRate: Double
+    val expectedElements: Int,
+    val falsePositiveRate: Double
 ) {
     private val params = optimalParameters(expectedElements, falsePositiveRate)
     private val bits = BooleanArray(params.bits)
@@ -101,12 +102,13 @@ class BloomFilter<T>(
 
     fun add(element: T) {
         // TODO: Set bit at each hash position to true
-        TODO()
+        getHashPositions(element).forEach { bits[it] = true }
     }
 
     fun mightContain(element: T): Boolean {
         // TODO: Return true only if ALL hash positions are set
-        TODO()
+
+        return getHashPositions(element).all { bits[it] }
     }
 
     // Estimate how many elements have been added
@@ -114,15 +116,21 @@ class BloomFilter<T>(
     // where X = number of bits set
     fun approximateElementCount(): Int {
         // TODO: Count set bits, apply formula
-        TODO()
+
+        val bitsSet = bits.count { it }
+        return (-1 * (params.bits / params.hashFunctions) * ln(1.0 - (bitsSet.toDouble() / params.bits.toDouble()))).toInt()
     }
 
     // Merge two bloom filters (OR their bit arrays)
     fun merge(other: BloomFilter<T>): BloomFilter<T> {
         require(this.params == other.params) { "Filters must have same parameters" }
 
+        val bloomFilter = BloomFilter<T>(expectedElements, falsePositiveRate)
+        (0 until bits.size).forEach {
+            bloomFilter.bits[it] = bits[it] || other.bits[it]
+        }
         // TODO: Create new filter, OR the bit arrays
-        TODO()
+        return bloomFilter
     }
 
     // Double hashing: h(i) = (h1 + i*h2) mod m
@@ -140,11 +148,11 @@ class BloomFilter<T>(
         // m = -n*ln(p) / (ln(2)^2)
         // k = (m/n) * ln(2)
         fun optimalParameters(elements: Int, falsePositiveRate: Double): BloomParameters {
-            val bits =
-                val  hashFunctions =
+            val bits = (-1 * elements * ln(falsePositiveRate)) / (ln(2.0).pow(2))
+            val hashFunctions = (bits / elements) * ln(2.0)
             // TODO: Calculate optimal bit array size and hash count
-                    
-                    return return BloomParameters(bits, hashFunctions = )
+
+            return BloomParameters(bits.toInt(), hashFunctions.toInt())
         }
     }
 }
