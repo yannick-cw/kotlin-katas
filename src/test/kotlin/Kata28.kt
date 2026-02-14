@@ -1,5 +1,7 @@
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import kotlin.experimental.xor
+import kotlin.math.max
 import kotlin.system.measureNanoTime
 
 class TimingAttackSpec : StringSpec({
@@ -64,20 +66,15 @@ class TimingAttackSpec : StringSpec({
 })
 
 // TODO: Implement constant-time string comparison
-fun constantTimeEquals(a: String, b: String): Boolean {
-    // 1. Always compare full length
-    // 2. XOR each byte, OR into result
-    // 3. Compare final result to 0
-    TODO()
-}
+fun constantTimeEquals(a: String, b: String): Boolean =
+    constantTimeEquals(a.toByteArray(), b.toByteArray())
 
 // TODO: Implement constant-time byte array comparison
-fun constantTimeEquals(a: ByteArray, b: ByteArray): Boolean {
-    TODO()
-}
+fun constantTimeEquals(a: ByteArray, b: ByteArray): Boolean =
+    (0 until max(a.size, b.size)).map { pos ->
+        a.getOrElse(pos) { 0 }.xor(b.getOrElse(pos) { 0 })
+    }.sum() == 0
 
 // TODO: Implement secure token verification
-fun verifyToken(provided: String, stored: String): Boolean {
-    // Use constant-time comparison
-    TODO()
-}
+fun verifyToken(provided: String, stored: String): Boolean = constantTimeEquals(provided, stored)
+
