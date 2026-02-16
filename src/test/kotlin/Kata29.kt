@@ -2,6 +2,9 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import java.security.SecureRandom
 import java.util.Base64
+import java.util.UUID
+import kotlin.math.absoluteValue
+import kotlin.uuid.Uuid
 
 class SecureRandomSpec : StringSpec({
 
@@ -9,6 +12,7 @@ class SecureRandomSpec : StringSpec({
         val tokens = (1..100).map { generateToken(32) }.toSet()
 
         tokens.size shouldBe 100  // All unique
+        tokens.toSet().size shouldBe tokens.size
     }
 
     "should generate token of correct length" {
@@ -22,7 +26,7 @@ class SecureRandomSpec : StringSpec({
         val token = generateUrlSafeToken(32)
 
         // Should only contain URL-safe characters
-        token.all { it.isLetterOrDigit() || it == '-' || it == '_' } shouldBe true
+        token.all { it.isLetterOrDigit() || it == '-' || it == '_' || it == '=' } shouldBe true
     }
 
     "should generate API key with prefix" {
@@ -58,35 +62,41 @@ class SecureRandomSpec : StringSpec({
 
 // TODO: Implement secure random generation
 
-fun generateSecureBytes(length: Int): ByteArray {
-    TODO()
-}
+fun generateSecureBytes(length: Int): ByteArray =
+    getSecBytes(length)
 
 fun generateToken(byteLength: Int): String {
+    val byteArray = getSecBytes(byteLength)
+    // Generate random bytes, encode as base64
+    return Base64.getEncoder().encodeToString(byteArray)
+}
+
+private fun getSecBytes(byteLength: Int): ByteArray {
     val sec = SecureRandom()
     val byteArray = ByteArray(byteLength)
     sec.nextBytes(byteArray)
-    // Generate random bytes, encode as base64
-    return Base64.getEncoder().encode(byteArray).joinToString { (it.toInt().toChar().toString()) }
+    return byteArray
 }
 
 fun generateUrlSafeToken(byteLength: Int): String {
     // Base64 URL-safe encoding (no +, /, =)
-    TODO()
+    val byteArray = getSecBytes(byteLength)
+    return Base64.getUrlEncoder().encodeToString(byteArray)
 }
 
 fun generateApiKey(prefix: String, byteLength: Int = 24): String {
     // Prefix + URL-safe random
-    TODO()
+    val generateUrlSafeToken = generateUrlSafeToken(byteLength)
+    return prefix + generateUrlSafeToken
 }
 
 fun generateOtp(length: Int): String {
     // Numeric only, uniform distribution
     // Be careful: random.nextInt(10) * length isn't uniform!
-    TODO()
+    return getSecBytes(length).map { it.toInt().absoluteValue % 10 }.joinToString("")
 }
 
 fun generateSecureUuid(): String {
     // UUID v4: random with version/variant bits set
-    TODO()
+    return UUID.randomUUID().toString()
 }
